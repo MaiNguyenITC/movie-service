@@ -1,21 +1,39 @@
 package com.example.movie_service.serviceImpl;
 
 import com.example.movie_service.dto.MovieDTO;
+import com.example.movie_service.dto.MovieResponse;
+import com.example.movie_service.dto.RatingDTO;
+import com.example.movie_service.dto.UserDTO;
 import com.example.movie_service.exception.BadRequestException;
 import com.example.movie_service.exception.NotFoundException;
 import com.example.movie_service.model.Movie;
 import com.example.movie_service.repository.MovieRepository;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import java.net.http.HttpHeaders;
 import java.util.List;
 
 @Service
 public class MovieService implements com.example.movie_service.service.MovieService {
     @Autowired
     private MovieRepository movieRepository;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    private static final String User_Service_URL = "http://localhost:6063/api/auth/";
+    private static final String Rating_Service_URL = "http://localhost:6062/api/rating/";
+
     @Override
-    public Movie createMovie(MovieDTO movieDTO) {
+    public Movie createMovie(String userName, MovieDTO movieDTO) {
         Movie movie = movieRepository.findBymovieName(movieDTO.getMovieName());
         if(movie != null){
             throw new BadRequestException("Movie is already exist with name: " + movieDTO.getMovieName());
@@ -59,5 +77,44 @@ public class MovieService implements com.example.movie_service.service.MovieServ
     @Override
     public List<Movie> getMovies() {
         return movieRepository.findAll();
+    }
+
+    @Override
+    public MovieResponse getMovieInformation(String movieId) {
+        RestTemplate restTemplate = new RestTemplate();
+        Movie movie = movieRepository.findById(movieId).orElseThrow(
+                () -> new NotFoundException("Movie is not found with id: " + movieId)
+        );
+
+
+        MovieResponse movieResponse = new MovieResponse();
+        movieResponse.setId(movieId);
+        movieResponse.setMovieName(movie.getMovieName());
+        movieResponse.setMovieDuration(movie.getMovieDuration());
+        movieResponse.setMovieDescription(movie.getMovieDescription());
+
+        UserDTO userDTO = restTemplate.getForObject(User_Service_URL + "username/"
+                + SecurityContextHolder.getContext().getAuthentication().getName(), UserDTO.class);
+
+        movieResponse.setDisplayName(userDTO.getDisplayName() != null ? userDTO.getDisplayName() : "");
+        movieResponse.setUserId(userDTO.getId() != null ? userDTO.getId() : "");
+
+
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.set("X-User-Name", SecurityContextHolder.getContext().getAuthentication().getName());
+        headers.set("X-User-Roles", SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString());
+
+        HttpEntity<HttpHeaders> requestEntity = new HttpEntity<>(headers);
+
+        ResponseEntity<List<RatingDTO>> response = restTemplate.exchange(
+                Rating_Service_URL + "movie/" + movieId,
+                HttpMethod.GET,
+                requestEntity,
+                new ParameterizedTypeReference<List<RatingDTO>>() {}
+        );
+
+        movieResponse.setRatings(response.getBody());
+
+        return movieResponse;
     }
 }

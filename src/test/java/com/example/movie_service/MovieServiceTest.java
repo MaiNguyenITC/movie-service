@@ -39,6 +39,8 @@ public class MovieServiceTest {
         movieDTO.setMovieName("test movie name");
         movieDTO.setMovieDuration("test movie duration");
 
+        String userName = "test user";
+
         Movie movie = new Movie();
         movie.setMovieDescription("test movie description");
         movie.setMovieName("test movie name");
@@ -47,7 +49,7 @@ public class MovieServiceTest {
 
         Mockito.when(movieRepository.save(Mockito.any(Movie.class))).thenReturn(movie);
 
-        Movie savedMovie = movieService.createMovie(movieDTO);
+        Movie savedMovie = movieService.createMovie(userName, movieDTO);
 
         assertNotNull(savedMovie);
         assertEquals(movieDTO.getMovieName(), savedMovie.getMovieName());
@@ -174,7 +176,7 @@ public class MovieServiceTest {
         Mockito.when(movieRepository.findBymovieName("test movie name")).thenReturn(existedMovie);
 
         BadRequestException ex = assertThrows(BadRequestException.class, () -> {
-            movieService.createMovie(movieDTO);
+            movieService.createMovie("test userName" ,movieDTO);
         });
 
         assertTrue(ex.getMessage().contains("Movie is already exist with name: " + movieDTO.getMovieName()));

@@ -1,6 +1,7 @@
 package com.example.movie_service.controller;
 
 import com.example.movie_service.dto.MovieDTO;
+import com.example.movie_service.dto.MovieResponse;
 import com.example.movie_service.model.Movie;
 import com.example.movie_service.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,7 @@ public class MovieController {
     public ResponseEntity<Movie> createMovie(@RequestBody MovieDTO movieDTO,
                                              @RequestHeader("X-User-Name") String username,
                                              @RequestHeader("X-Authorities") String roles){
-        Movie movie = movieService.createMovie(movieDTO);
+        Movie movie = movieService.createMovie(username, movieDTO);
         return ResponseEntity.ok(movie);
     }
 
@@ -47,5 +48,11 @@ public class MovieController {
     public ResponseEntity<Void> deleteMovie(@PathVariable String movieId){
         movieService.deleteMovie(movieId);
         return ResponseEntity.ok(null);
+    }
+
+    @GetMapping("/infor/{movieId}")
+    public ResponseEntity<MovieResponse> getMovieInformation(@PathVariable String movieId){
+        MovieResponse movie = movieService.getMovieInformation(movieId);
+        return ResponseEntity.ok(movie);
     }
 }

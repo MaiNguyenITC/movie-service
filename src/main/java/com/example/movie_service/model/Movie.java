@@ -14,4 +14,5 @@ public class Movie {
     private String movieName;
     private String movieDuration;
     private String movieDescription;
+    private String userName;
 }
