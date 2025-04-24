@@ -1,0 +1,20 @@
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: admin
+
+  cloud:
+    stream:
+      default-binder: rabbit
+      bindings:
+        createMovie-out-0:
+          destination: create-movie
+          group: create-movie-group
+        getMovie-out-0:
+          destination: get-movie
+          group: get-movie-group
+        createRating-in-0:
+          destination: create-rating
+          group: create-rating-group

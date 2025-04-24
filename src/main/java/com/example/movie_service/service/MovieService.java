@@ -7,7 +7,7 @@ import com.example.movie_service.model.Movie;
 import java.util.List;
 
 public interface MovieService {
-    Movie createMovie(String userName, MovieDTO movieDTO);
+    Movie createMovie(MovieDTO movieDTO);
     Movie updateMovie(String movieId, MovieDTO movieDTO);
     void deleteMovie(String movieId);
     Movie getMovie(String movieId);

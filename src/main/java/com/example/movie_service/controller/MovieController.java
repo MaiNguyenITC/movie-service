@@ -17,12 +17,10 @@ public class MovieController {
     @Autowired
     private MovieService movieService;
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     @PostMapping()
-    public ResponseEntity<Movie> createMovie(@RequestBody MovieDTO movieDTO,
-                                             @RequestHeader("X-User-Name") String username,
-                                             @RequestHeader("X-Authorities") String roles){
-        Movie movie = movieService.createMovie(username, movieDTO);
+    public ResponseEntity<Movie> createMovie(@RequestBody MovieDTO movieDTO){
+        Movie movie = movieService.createMovie(movieDTO);
         return ResponseEntity.ok(movie);
     }
 
