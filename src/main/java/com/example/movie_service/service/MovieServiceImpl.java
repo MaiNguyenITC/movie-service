@@ -1,4 +1,4 @@
-package com.example.movie_service.serviceImpl;
+package com.example.movie_service.service;
 
 import com.example.movie_service.dto.MovieDTO;
 import com.example.movie_service.dto.MovieResponse;
@@ -22,7 +22,7 @@ import java.net.http.HttpHeaders;
 import java.util.List;
 
 @Service
-public class MovieService implements com.example.movie_service.service.MovieService {
+public class MovieServiceImpl implements com.example.movie_service.service.MovieService {
     @Autowired
     private MovieRepository movieRepository;
 

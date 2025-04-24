@@ -5,7 +5,7 @@ import com.example.movie_service.exception.BadRequestException;
 import com.example.movie_service.exception.NotFoundException;
 import com.example.movie_service.model.Movie;
 import com.example.movie_service.repository.MovieRepository;
-import com.example.movie_service.serviceImpl.MovieService;
+import com.example.movie_service.service.MovieServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MovieServiceTest {
     @InjectMocks
-    private MovieService movieService;
+    private MovieServiceImpl movieService;
     @Mock
     private MovieRepository movieRepository;
 
