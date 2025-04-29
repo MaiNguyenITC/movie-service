@@ -15,5 +15,5 @@ public class Movie {
     private String movieDuration;
     private String movieDescription;
     private String userName;
-    private int averageStar;
+    private double averageStar;
 }

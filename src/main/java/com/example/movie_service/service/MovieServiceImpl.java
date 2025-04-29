@@ -13,6 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -35,8 +38,8 @@ public class MovieServiceImpl implements com.example.movie_service.service.Movie
         this.streamBridge = streamBridge;
     }
 
-    private static final String User_Service_URL = "http://localhost:6063/api/auth/";
-    private static final String Rating_Service_URL = "http://localhost:6062/api/rating/";
+    private static final String User_Service_URL = "http://localhost:8080/api/auth/";
+    private static final String Rating_Service_URL = "http://localhost:8080/api/rating/";
 
     @Override
     public Movie createMovie(MovieDTO movieDTO) {
@@ -101,6 +104,7 @@ public class MovieServiceImpl implements com.example.movie_service.service.Movie
         movieResponse.setMovieName(movie.getMovieName());
         movieResponse.setMovieDuration(movie.getMovieDuration());
         movieResponse.setMovieDescription(movie.getMovieDescription());
+        movieResponse.setAverageStar(movie.getAverageStar());
 
         UserDTO userDTO = restTemplate.getForObject(User_Service_URL + "username/"
                 + SecurityContextHolder.getContext().getAuthentication().getName(), UserDTO.class);
@@ -109,9 +113,10 @@ public class MovieServiceImpl implements com.example.movie_service.service.Movie
         movieResponse.setUserId(userDTO.getId() != null ? userDTO.getId() : "");
 
 
+        String jwtToken = (String) SecurityContextHolder.getContext().getAuthentication().getCredentials();
+
         org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-        headers.set("X-User-Name", SecurityContextHolder.getContext().getAuthentication().getName());
-        headers.set("X-User-Roles", SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString());
+        headers.set("Authorization", "Bearer " + jwtToken);
 
         HttpEntity<HttpHeaders> requestEntity = new HttpEntity<>(headers);
 
@@ -127,26 +132,35 @@ public class MovieServiceImpl implements com.example.movie_service.service.Movie
         return movieResponse;
     }
 
+    @Override
+    public Page<Movie> pagingMovie(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return movieRepository.findAll(pageable);
+    }
+
 
     //This function need to update in call Rating service api
     @Bean
     public Consumer<String> createRating() {
         return movieString -> {
             System.out.println("📥 Nhận message từ RabbitMQ - create rating: " + movieString);
+            List<String> paths = List.of(movieString.split(" "));
 
-            Movie movie = movieRepository.findById(movieString).orElseThrow(
+            Movie movie = movieRepository.findById(paths.get(0)).orElseThrow(
                     () -> new NotFoundException("Movie is not found with id: " + movieString)
             );
 
+
+            RestTemplate restTemplate = new RestTemplate();
+            String jwtToken = (String) paths.get(1);
+
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-            headers.set("X-User-Name", SecurityContextHolder.getContext().getAuthentication().getName());
-            headers.set("X-User-Roles", SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString());
+            headers.set("Authorization", "Bearer " + jwtToken);
 
             HttpEntity<HttpHeaders> requestEntity = new HttpEntity<>(headers);
-            RestTemplate restTemplate = new RestTemplate();
 
             ResponseEntity<List<RatingDTO>> response = restTemplate.exchange(
-                    Rating_Service_URL + "movie/" + movieString,
+                    Rating_Service_URL + "movie/" + paths.get(0),
                     HttpMethod.GET,
                     requestEntity,
                     new ParameterizedTypeReference<List<RatingDTO>>() {}
@@ -157,7 +171,7 @@ public class MovieServiceImpl implements com.example.movie_service.service.Movie
             for (RatingDTO ratingDTO : response.getBody()){
                 sum += ratingDTO.getRatingStar();
             }
-            movie.setAverageStar(sum/response.getBody().size());
+            movie.setAverageStar((double) sum /response.getBody().size());
             movieRepository.save(movie);
         };
     }

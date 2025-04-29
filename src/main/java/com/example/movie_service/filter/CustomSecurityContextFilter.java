@@ -32,8 +32,6 @@ public class CustomSecurityContextFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String jwt = request.getHeader(JwtConstant.JWT_HEADER);
 
-        System.out.println(jwt);
-
         if (jwt != null) {
             jwt = jwt.substring(7);
             try {
@@ -44,7 +42,7 @@ public class CustomSecurityContextFilter extends OncePerRequestFilter {
                 String authorities = String.valueOf(claims.get("authorities"));
 
                 List<GrantedAuthority> auth = AuthorityUtils.commaSeparatedStringToAuthorityList(authorities);
-                Authentication authentication = new UsernamePasswordAuthenticationToken(userName, null, auth);
+                Authentication authentication = new UsernamePasswordAuthenticationToken(userName, jwt, auth);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception e) {
                 throw new BadCredentialsException("invalid token.....");

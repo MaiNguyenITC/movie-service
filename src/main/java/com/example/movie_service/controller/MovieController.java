@@ -5,6 +5,7 @@ import com.example.movie_service.dto.MovieResponse;
 import com.example.movie_service.model.Movie;
 import com.example.movie_service.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -37,8 +38,9 @@ public class MovieController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<Movie>> getAllMovie(){
-        List<Movie> movies = movieService.getMovies();
+    public ResponseEntity<Page<Movie>> getAllMovie(@RequestParam(defaultValue = "0") int page,
+                                                   @RequestParam(defaultValue = "10") int size){
+        Page<Movie> movies = movieService.pagingMovie(page, size);
         return ResponseEntity.ok(movies);
     }
 

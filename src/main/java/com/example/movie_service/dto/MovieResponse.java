@@ -13,6 +13,7 @@ public class MovieResponse {
     private String movieDescription;
     private String userId;
     private String displayName;
+    private double averageStar;
     private List<RatingDTO> ratings = new ArrayList<>();
 
 }
